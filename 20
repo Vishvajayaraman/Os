@@ -1,0 +1,48 @@
+   #include<omp.h>
+    #include<semaphore.h>
+    #include<stdio.h>
+    #include<unistd.h>
+    int var=10;
+    int ReadCount=0;
+    sem_t Sem;
+    void main()
+    {
+        sem_init(&Sem, 0, 1);
+        int ThreadId = 0;
+        int NReader, NWriter;
+        int i,j;
+        printf("\nEnter number of readers: ");
+        scanf("%d",&NReader);
+        printf("\nEnter number of writers: ");
+        scanf("%d",&NWriter);                                                                                           
+        {
+            printf("\n in parallel construct");
+            for(i=0 ; i<NReader ; i++)
+            {
+                printf("\nReader started %d",i);
+                {           
+                    ReadCount++;
+                    if(ReadCount==1)
+                        sem_wait(&Sem);
+                }
+                ThreadId = omp_get_thread_num();
+                printf("\n\nReader %d with thread id %d is reading shared variable %d ",i,ThreadId,var);    
+                {           
+                    ReadCount--;
+                    if(ReadCount==0)
+                        sem_post(&Sem);
+                }
+                  
+            }
+            for(j=0 ; j<NWriter ; j++)
+            {
+                printf("\nWriter started %d",j);
+                sem_wait(&Sem);
+                sleep(1);
+                var=var+2;
+                ThreadId = omp_get_thread_num();
+                printf("\nWriter %d with ThreadId %d has updated the shared variable to %d ",j,ThreadId,var);
+                sem_post(&Sem);
+            }
+        }
+    }
